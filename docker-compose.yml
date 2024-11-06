@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  jira:
+    container_name: jira
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      spring.datasource.username: ${DB_USERNAME}
+      spring.datasource.password: ${DB_PASSWORD}
+      spring.datasource.url: jdbc:postgresql://db:5432/jira
+      spring.security.oauth2.client.registration.github.client-id: ${OAUTH_GITHUB_CLIENT_ID}
+      spring.security.oauth2.client.registration.github.client-secret: ${OAUTH_GITHUB_CLIENT_SECRET}
+      spring.security.oauth2.client.registration.google.client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+      spring.security.oauth2.client.registration.google.client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+      spring.security.oauth2.client.registration.gitlab.client-id: ${OAUTH_GITLAB_CLIENT_ID}
+      spring.security.oauth2.client.registration.gitlab.client-secret: ${OAUTH_GITLAB_CLIENT_SECRET}
+      mail.username: ${MAIL_USERNAME}
+      mail.password: ${MAIL_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - nginx
+    networks:
+      - jira-network
+
+  nginx:
+    container_name: nginx_container
+    image: nginx:latest
+    restart: always
+    ports:
+      - "81:81"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/nginx.conf
+
+  db:
+    hostname: db
+    container_name: prod_db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - jira-network
+
+networks:
+  jira-network:
+    driver: bridge
